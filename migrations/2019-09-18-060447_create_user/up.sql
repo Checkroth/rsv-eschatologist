@@ -1,0 +1,5 @@
+CREATE TABLE slack_users(
+			 id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			 slack_id VARCHAR(9) NOT NULL,
+			 display_name VARCHAR(255) NOT NULL
+) ENGINE = InnoDB;
