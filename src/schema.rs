@@ -2,7 +2,6 @@ table! {
     slack_users (id) {
         id -> Integer,
         slack_id -> Varchar,
-        display_name -> Varchar,
     }
 }
 
@@ -10,7 +9,7 @@ table! {
     thxs (id) {
         id -> Integer,
         slack_user_id -> Integer,
-        channel_id -> Integer,
+        channel_id -> Varchar,
     }
 }
 

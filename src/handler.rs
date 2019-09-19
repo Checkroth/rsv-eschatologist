@@ -17,8 +17,6 @@ Allows slack-rs api to call our code when messages are received.
 **/
 impl EventHandler for Handler {
     fn on_event(&mut self, cli: &RtmClient, event: Event) {
-        println!("event triggered: {:?}", event);
-
         match event.clone() {
             Event::Message(message) => self.handle_message(*message, cli),
             _ => return
@@ -62,7 +60,7 @@ impl Handler {
         if user_id == bot_id {
             return
         };
-        slack_action.action(&bot_id, &user_id, &text, &channel).and_then(
+        slack_action.action(&bot_id, &user_id, &text, &channel, &self.db_connection).and_then(
             |response_text| cli.sender().send_message(&channel, &response_text).ok()
         );
     }
