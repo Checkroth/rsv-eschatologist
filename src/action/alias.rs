@@ -43,7 +43,7 @@ impl SlackAction for AliasConnect {
             .filter(name_alias.eq(&alias))
             .first::<UserAlias>(conn) {
                 Ok(UserAlias { id: ref alias_id, name_alias: _, slack_user_id: ref suid }) if suid == user_record.id => {
-                    Some(String::from("You already own that alias")),
+                    Some(String::from("You already own that alias"))
                 },
                 Ok(alias_record) if alias_record.slack_user_id == None => {
                     // update record here
@@ -138,24 +138,17 @@ impl SlackAction for AliasRemove {
             .filter(name_alias.eq(&alias))
             .first::<UserAlias>(conn);
 
-        let dne = Some(String::from(["Alias", alias, "doesn't exist"].join(" ")));
         match existing_alias {
-            Ok(alias_record) => {
-                // Check if alias is owned by user
-                match slack_users.filter(slack_users_id.eq(&alias_record.slack_user_id)).first::<SlackUser>(conn) {
-                    // TODO:: This statement probably own't work
-                    Ok(SlackUser { id: _, slack_id: ref sid }) if sid == user_id | sid == None => {
-                        // Delete alias if owned by user
-                        match diesel::delete(&alias_record).execute(conn) {
-                            Ok(_) => Some(String::from(["Alias `", &alias_record.name_alias, "` deleted."].join(""))),
-                            Err(_) => Some(String::from("Failed to detele alias."))
-                        }
-                    },
-                    Ok(_) => { Some(String::from("Alias is owned by another user")) },
-                    _ => { dne }
-                }
+            Ok(alias_record) if alias_record.slack_user_id == Some(user_id) || alias_record.slack_user_id == None {
+                diesel::delete(&alias_record)
+                    .execute(conn)
+                    .expect("Failed to delete record");
+                Some(String::from("Alias deleted."))
             },
-            _ => dne 
+            Ok(_) => {
+                Some(String::from("Alias belongs to another user"))
+            }
+            _ => Some(String::from(["Alias", alias, "doesn't exist"].join(" ")))
         }
     }
 }

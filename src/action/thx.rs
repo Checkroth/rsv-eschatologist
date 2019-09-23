@@ -27,7 +27,7 @@ Takes <user_alias>++ and increases that user's points
 Returns a message displaying the user's new point count for the channel
  **/
 impl SlackAction for ThxAdd {
-    fn thx_slack_user(&self, thxcount: u32, slack_user: SlackUser, &str, channel: &str, conn: &DBConnection) -> Option<String> {
+    fn thx_slack_user(&self, thxcount: u32, slack_user: SlackUser, channel: &str, conn: &DBConnection) -> Option<String> {
         Some("Implement me")
     }
 

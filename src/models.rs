@@ -19,7 +19,7 @@ pub struct UserAlias {
 }
 
 #[derive(Identifiable, Associations, Queryable)]
-#[belongs_to(SlackUser, foreign_key = "slack_user_id")]
+#[belongs_to(UserAlias, foreign_key = "alias_id")]
 #[table_name = "thxs"]
 pub struct Thx {
     pub id: i32,
