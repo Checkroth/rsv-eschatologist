@@ -8,6 +8,64 @@ use super::schema::slack_users::dsl::id as slack_users_id; // for unamibiguous q
 use super::schema::user_aliases::dsl::*;
 use super::diesel::prelude::*;
 
+pub struct AliasConnect;
+
+impl SlackAction for AliasConnect {
+    fn action(&self, _: &str, user_id: &str, text: &str, _channel: &str, conn: &DBConnection) -> Option<String> {
+        let message_split: Vec<&str> = text.split(" connect ").collect();
+        let alias: &str = match message_split.get(1) {
+            Some(alias) => alias,
+            _ => return Some(String::from("Alias not provided"))
+        };
+        
+        // Find existing user or create
+        let existing_user = slack_users
+            .filter(slack_id.eq(&user_id))
+            .first::<SlackUser>(conn);
+        
+        let user_record: SlackUser = match existing_user {
+            Ok(user) => { user },
+            _ => {
+                // Insert new user and return that record.
+                diesel::insert_into(slack_users)
+                    .values(slack_id.eq(user_id))
+                    .execute(conn)
+                    .expect("failed to save user!");
+                
+                slack_users.filter(slack_id.eq(&user_id))
+                    .first::<SlackUser>(conn)
+                    .expect("failed to add user!")
+            }
+        };
+
+        // Check if alias exists
+        match user_aliases
+            .filter(name_alias.eq(&alias))
+            .first::<UserAlias>(conn) {
+                Ok(UserAlias { id: ref alias_id, name_alias: _, slack_user_id: ref suid }) if suid == user_record.id => {
+                    Some(String::from("You already own that alias")),
+                },
+                Ok(alias_record) if alias_record.slack_user_id == None => {
+                    // update record here
+                    diesel::update(&alias_record)
+                        .set(slack_user_id.eq(user_record.id))
+                        .execute(conn)
+                        .expect("Failed to update alias");
+                    Some("Attached alias to you!")
+                },
+                Ok(_) => Some(String::from("That doesn't belong to you")),
+                _ => {
+                    diesel::insert_into(user_aliases)
+                        .values((name_alias.eq(&alias),
+                                 slack_user_id.eq(user_record)))
+                        .execute(conn)
+                        .expect("failed to create alias");
+                    Some(String::from("Created alias and attached it to you!"))
+                }
+            }
+    }
+}
+
 pub struct AliasAdd;
 
 /**
@@ -85,7 +143,8 @@ impl SlackAction for AliasRemove {
             Ok(alias_record) => {
                 // Check if alias is owned by user
                 match slack_users.filter(slack_users_id.eq(&alias_record.slack_user_id)).first::<SlackUser>(conn) {
-                    Ok(SlackUser { id: _, slack_id: ref sid }) if sid == user_id => {
+                    // TODO:: This statement probably own't work
+                    Ok(SlackUser { id: _, slack_id: ref sid }) if sid == user_id | sid == None => {
                         // Delete alias if owned by user
                         match diesel::delete(&alias_record).execute(conn) {
                             Ok(_) => Some(String::from(["Alias `", &alias_record.name_alias, "` deleted."].join(""))),

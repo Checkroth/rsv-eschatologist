@@ -27,6 +27,14 @@ Takes <user_alias>++ and increases that user's points
 Returns a message displaying the user's new point count for the channel
  **/
 impl SlackAction for ThxAdd {
+    fn thx_slack_user(&self, thxcount: u32, slack_user: SlackUser, &str, channel: &str, conn: &DBConnection) -> Option<String> {
+        Some("Implement me")
+    }
+
+    fn thx_arbitrary(&self, thxcount: u32, alias: UserAlias, text: &str, channel: &str, conn: &DBConnection) -> Option<String> {
+        Some("Implement me arbitrary")
+    }
+
     fn action(&self, _: &str, user_id: &str, text: &str, channel: &str, conn: &DBConnection) -> Option<String> {
         let split: Vec<&str> = text.split("++").collect();
         let target_alias: &str = match split.get(0) {
@@ -38,9 +46,21 @@ impl SlackAction for ThxAdd {
             .filter(name_alias.eq(&target_alias))
             .first::<UserAlias>(conn) {
                 Ok(alias_record) => alias_record,
-                _ => return Some(String::from(["Couldn't find user", target_alias].join(" ")))
+                _ => return Some(String::from(["Couldn't find alias", target_alias].join(" ")))
             };
 
+        match slack_users
+            .filter(slack_users_pk.eq(&alias_record.slack_user_id))
+            .first::<Slack_user>(conn) {
+                Ok(slack_user) => {
+                    // implement plusplus for slack user
+                    
+                },
+                _ => {
+                    // store and or implement alias for keyword
+                }
+                
+            }
         let user_record =  match slack_users
             .filter(slack_users_pk.eq(&alias_record.slack_user_id))
             .first::<SlackUser>(conn) {

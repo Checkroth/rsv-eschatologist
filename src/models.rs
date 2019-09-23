@@ -15,7 +15,7 @@ pub struct SlackUser {
 pub struct UserAlias {
     pub id: i32,
     pub name_alias: String,
-    pub slack_user_id: i32,
+    pub slack_user_id: Option<i32>,
 }
 
 #[derive(Identifiable, Associations, Queryable)]
@@ -23,6 +23,6 @@ pub struct UserAlias {
 #[table_name = "thxs"]
 pub struct Thx {
     pub id: i32,
-    pub slack_user_id: i32,
     pub channel_id: String,
+    pub alias_id: Option<i32>,
 }
